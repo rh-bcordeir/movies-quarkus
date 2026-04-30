@@ -1,0 +1,39 @@
+---
+# Application
+app_name: movies-quarkus
+gitops_namespace: openshift-gitops
+
+# CI namespace — where Tekton runs
+ci_namespace: movies-quarkus-ci
+
+# Application namespaces per environment
+namespace_dev: movies-quarkus-dev
+namespace_hml: movies-quarkus-hml
+namespace_prd: movies-quarkus-prd
+
+# Source repository (app code)
+app_repo_url: "https://github.com/rh-bcordeir/movies-quarkus.git"
+
+# GitOps repository (Helm chart)
+gitops_repo_url: "https://github.com/rh-bcordeir/movies-quarkus-devops.git"
+gitops_repo_revision: "main"
+gitops_chart_path: "chart"
+
+# Per-environment Helm values files inside the GitOps repo
+values_file_dev: "chart/values/values-dev.yaml"
+values_file_hml: "chart/values/values-hml.yaml"
+values_file_prd: "chart/values/values-prd.yaml"
+
+# Image registry (Quay.io)
+image_repository: "quay.io/rh-ee-bcordeir/movies-quarkus"
+
+# Git author for the bot commits pushed by the pipeline
+git_user_name: "Tekton Pipeline"
+git_user_email: "tekton@movies-quarkus.local"
+
+# Name of the Secret holding git credentials for pushing to the gitops repo.
+# Expected keys: .git-credentials and .gitconfig. Created out-of-band.
+git_credentials_secret: "gitops-git-credentials"
+
+# Optional webhook secret for GitHub trigger
+webhook_secret_token: "change-me-please"

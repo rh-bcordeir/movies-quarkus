@@ -1,0 +1,153 @@
+---
+# Deploys the OpenShift Pipelines + GitOps assets for movies-quarkus.
+#
+# Prereqs on the cluster:
+#   - OpenShift Pipelines operator installed
+#   - OpenShift GitOps operator installed
+#   - `oc` is logged in to the target cluster
+#
+# Prereqs locally:
+#   - ansible-core
+#   - kubernetes.core collection (`ansible-galaxy collection install kubernetes.core`)
+#   - PyYAML, kubernetes python clients
+#
+# Usage:
+#   ansible-playbook -i inventory.yml playbook.yml
+#
+# To skip the ArgoCD Application bootstrap:
+#   ansible-playbook -i inventory.yml playbook.yml --skip-tags gitops
+#
+# To only render manifests to ./_rendered without applying:
+#   ansible-playbook -i inventory.yml playbook.yml -e apply=false
+
+- name: Deploy CI/CD assets for movies-quarkus
+  hosts: localhost
+  gather_facts: false
+  vars_files:
+    - vars/main.yml
+  vars:
+    apply: true
+    rendered_dir: "{{ playbook_dir }}/_rendered"
+  tasks:
+    - name: Ensure required CRDs are present
+      kubernetes.core.k8s_info:
+        api_version: apiextensions.k8s.io/v1
+        kind: CustomResourceDefinition
+        name: "{{ item }}"
+      loop:
+        - pipelines.tekton.dev
+        - eventlisteners.triggers.tekton.dev
+        - applications.argoproj.io
+      register: crd_check
+      failed_when: crd_check.resources | length == 0
+
+    - name: Create rendered output directory
+      ansible.builtin.file:
+        path: "{{ rendered_dir }}/{{ item }}"
+        state: directory
+        mode: "0755"
+      loop:
+        - base
+        - tasks
+        - pipeline
+        - triggers
+        - gitops
+
+    - name: Discover manifest templates
+      ansible.builtin.find:
+        paths: "{{ playbook_dir }}/manifests"
+        patterns: "*.yaml.j2"
+        recurse: true
+      register: manifest_templates
+
+    - name: Render manifest templates
+      ansible.builtin.template:
+        src: "{{ item.path }}"
+        dest: "{{ rendered_dir }}/{{ item.path | regex_replace('^.*/manifests/', '') | regex_replace('\\.j2$', '') }}"
+        mode: "0644"
+      loop: "{{ manifest_templates.files }}"
+      loop_control:
+        label: "{{ item.path | basename }}"
+
+    - name: Apply base resources (namespaces, RBAC, PVCs)
+      kubernetes.core.k8s:
+        state: present
+        src: "{{ item }}"
+      loop:
+        - "{{ rendered_dir }}/base/00-namespace.yaml"
+        - "{{ rendered_dir }}/base/01-rbac.yaml"
+        - "{{ rendered_dir }}/base/02-workspace-pvc.yaml"
+      when: apply | bool
+      tags: [base]
+
+    - name: Apply Tekton Tasks
+      kubernetes.core.k8s:
+        state: present
+        src: "{{ item }}"
+      with_fileglob:
+        - "{{ rendered_dir }}/tasks/*.yaml"
+      when: apply | bool
+      tags: [tasks]
+
+    - name: Apply Pipelines
+      kubernetes.core.k8s:
+        state: present
+        src: "{{ item }}"
+      with_fileglob:
+        - "{{ rendered_dir }}/pipeline/pipeline-*.yaml"
+      when: apply | bool
+      tags: [pipeline]
+
+    - name: Apply Triggers (EventListener, TriggerTemplates, Bindings, Route)
+      kubernetes.core.k8s:
+        state: present
+        src: "{{ rendered_dir }}/triggers/triggers.yaml"
+      when: apply | bool
+      tags: [triggers]
+
+    - name: Apply ArgoCD Applications (dev, hml, prd)
+      kubernetes.core.k8s:
+        state: present
+        src: "{{ rendered_dir }}/gitops/argocd-application.yaml"
+      when: apply | bool
+      tags: [gitops]
+
+    - name: Fetch webhook Route
+      kubernetes.core.k8s_info:
+        api_version: route.openshift.io/v1
+        kind: Route
+        namespace: "{{ ci_namespace }}"
+        name: "el-{{ app_name }}-listener"
+      register: webhook_route
+      when: apply | bool
+      tags: [triggers]
+
+    - name: Print post-install hints
+      ansible.builtin.debug:
+        msg:
+          - "──────────────────────────────────────────────"
+          - "Webhook URL (single URL for all branches):"
+          - "  https://{{ (webhook_route.resources | first).spec.host | default('<route not yet admitted — retry in a moment>') }}"
+          - "Webhook secret token: {{ webhook_secret_token }}"
+          - ""
+          - "GitHub → Settings → Webhooks → Add webhook"
+          - "  Payload URL : https://<webhook-host>"
+          - "  Content type: application/json"
+          - "  Secret      : {{ webhook_secret_token }}"
+          - "  Events      : Just the push event"
+          - ""
+          - "Create the Quay push secret (if not done):"
+          - "  oc create secret docker-registry quay-push-secret \\"
+          - "    --docker-server=quay.io \\"
+          - "    --docker-username=<robot> --docker-password=<token> \\"
+          - "    -n {{ ci_namespace }}"
+          - "  oc secrets link pipeline-sa quay-push-secret --for=mount -n {{ ci_namespace }}"
+          - ""
+          - "Create the GitOps push credentials secret:"
+          - "  oc create secret generic {{ git_credentials_secret }} \\"
+          - "    --from-literal=.git-credentials='https://USER:TOKEN@github.com' \\"
+          - "    --from-literal=.gitconfig=$'[credential]\\n  helper = store' \\"
+          - "    -n {{ ci_namespace }}"
+          - "──────────────────────────────────────────────"
+      when: apply | bool
+      tags: [triggers]

@@ -1,0 +1,33 @@
+---
+# CI namespace — Tekton pipelines live here
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ ci_namespace }}
+  labels:
+    app.kubernetes.io/part-of: {{ app_name }}
+---
+# Application namespaces — ArgoCD manages deployments here
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ namespace_dev }}
+  labels:
+    app.kubernetes.io/part-of: {{ app_name }}
+    argocd.argoproj.io/managed-by: {{ gitops_namespace }}
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ namespace_hml }}
+  labels:
+    app.kubernetes.io/part-of: {{ app_name }}
+    argocd.argoproj.io/managed-by: {{ gitops_namespace }}
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ namespace_prd }}
+  labels:
+    app.kubernetes.io/part-of: {{ app_name }}
+    argocd.argoproj.io/managed-by: {{ gitops_namespace }}

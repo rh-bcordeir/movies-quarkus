@@ -1,0 +1,91 @@
+---
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: promote-gitops
+  namespace: {{ ci_namespace }}
+spec:
+  description: >
+    Promotion task: reads image.tag from the SOURCE values file (already
+    validated in the upstream environment) and writes that exact same tag
+    to the TARGET values file. No image rebuild takes place — the same
+    artifact is promoted through environments.
+  params:
+    - name: GITOPS_REPO_URL
+      type: string
+    - name: GITOPS_REPO_REVISION
+      type: string
+      default: main
+    - name: SOURCE_VALUES_FILE
+      type: string
+      description: "Values file to read the promoted tag from (e.g. chart/values-dev.yaml)."
+    - name: TARGET_VALUES_FILE
+      type: string
+      description: "Values file to write the promoted tag into (e.g. chart/values-hml.yaml)."
+    - name: GIT_USER_NAME
+      type: string
+      default: "Tekton Pipeline"
+    - name: GIT_USER_EMAIL
+      type: string
+      default: "tekton@example.com"
+  workspaces:
+    - name: source
+    - name: basic-auth
+      description: "Workspace containing .git-credentials and .gitconfig."
+  results:
+    - name: PROMOTED_TAG
+      description: "The image tag that was promoted."
+  steps:
+    - name: promote
+      image: registry.access.redhat.com/ubi9/ubi:latest
+      workingDir: $(workspaces.source.path)
+      script: |
+        #!/usr/bin/env bash
+        set -euo pipefail
+
+        dnf install -y --quiet git python3-pyyaml >/dev/null
+
+        cp "$(workspaces.basic-auth.path)/.git-credentials" "${HOME}/.git-credentials"
+        cp "$(workspaces.basic-auth.path)/.gitconfig"      "${HOME}/.gitconfig"
+        chmod 400 "${HOME}/.git-credentials" "${HOME}/.gitconfig"
+
+        git config --global user.name  "$(params.GIT_USER_NAME)"
+        git config --global user.email "$(params.GIT_USER_EMAIL)"
+
+        rm -rf gitops
+        git clone --depth=1 --branch "$(params.GITOPS_REPO_REVISION)" \
+          "$(params.GITOPS_REPO_URL)" gitops
+        cd gitops
+
+        PROMOTED_TAG=$(python3 - <<PY
+        import yaml
+        with open("$(params.SOURCE_VALUES_FILE)") as f:
+            src = yaml.safe_load(f) or {}
+        tag = src.get("image", {}).get("tag", "")
+        if not tag:
+            raise ValueError("No image.tag found in $(params.SOURCE_VALUES_FILE)")
+        print(tag, end="")
+        PY
+        )
+
+        python3 - <<PY
+        import yaml
+        tag = "${PROMOTED_TAG}"
+        with open("$(params.TARGET_VALUES_FILE)") as f:
+            tgt = yaml.safe_load(f) or {}
+        tgt.setdefault("image", {})
+        tgt["image"]["tag"] = tag
+        with open("$(params.TARGET_VALUES_FILE)", "w") as f:
+            yaml.safe_dump(tgt, f, default_flow_style=False, sort_keys=False)
+        PY
+
+        git add "$(params.TARGET_VALUES_FILE)"
+        if git diff --cached --quiet; then
+          echo "Tag ${PROMOTED_TAG} already in $(params.TARGET_VALUES_FILE), nothing to do."
+          printf "%s" "${PROMOTED_TAG}" > "$(results.PROMOTED_TAG.path)"
+          exit 0
+        fi
+
+        git commit -m "ci: promote ${PROMOTED_TAG} to $(params.TARGET_VALUES_FILE)"
+        git push origin "$(params.GITOPS_REPO_REVISION)"
+        printf "%s" "${PROMOTED_TAG}" > "$(results.PROMOTED_TAG.path)"

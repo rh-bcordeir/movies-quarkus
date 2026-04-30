@@ -1,0 +1,87 @@
+---
+# CI Pipeline — triggered on pushes to the 'develop' branch.
+# Builds the image from source, pushes to Quay, and updates values-dev.yaml.
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: {{ app_name }}-ci
+  namespace: {{ ci_namespace }}
+spec:
+  description: "Clone → test → build image → push to Quay → update values-dev.yaml"
+  params:
+    - name: app-repo-url
+      type: string
+      default: "{{ app_repo_url }}"
+    - name: app-repo-revision
+      type: string
+    - name: gitops-repo-url
+      type: string
+      default: "{{ gitops_repo_url }}"
+    - name: gitops-repo-revision
+      type: string
+      default: "{{ gitops_repo_revision }}"
+    - name: image-tag
+      type: string
+      description: "Short SHA injected by the trigger."
+  workspaces:
+    - name: shared-workspace
+    - name: maven-cache
+    - name: gitops-auth
+  tasks:
+    - name: fetch-source
+      taskRef:
+        name: git-clone
+      workspaces:
+        - name: output
+          workspace: shared-workspace
+      params:
+        - name: url
+          value: $(params.app-repo-url)
+        - name: revision
+          value: $(params.app-repo-revision)
+
+    - name: test
+      runAfter: ["fetch-source"]
+      taskRef:
+        name: maven-test
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+        - name: maven-cache
+          workspace: maven-cache
+
+    - name: build-image
+      runAfter: ["test"]
+      taskRef:
+        name: buildah
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+      params:
+        - name: IMAGE
+          value: "{{ image_repository }}:$(params.image-tag)"
+
+    - name: update-gitops-dev
+      runAfter: ["build-image"]
+      taskRef:
+        name: update-gitops
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+        - name: basic-auth
+          workspace: gitops-auth
+      params:
+        - name: GITOPS_REPO_URL
+          value: $(params.gitops-repo-url)
+        - name: GITOPS_REPO_REVISION
+          value: $(params.gitops-repo-revision)
+        - name: VALUES_FILE
+          value: "{{ values_file_dev }}"
+        - name: IMAGE_REPOSITORY
+          value: "{{ image_repository }}"
+        - name: IMAGE_TAG
+          value: $(params.image-tag)
+        - name: GIT_USER_NAME
+          value: "{{ git_user_name }}"
+        - name: GIT_USER_EMAIL
+          value: "{{ git_user_email }}"

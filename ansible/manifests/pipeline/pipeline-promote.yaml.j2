@@ -1,0 +1,52 @@
+---
+# Promotion Pipeline — triggered on pushes to 'release' (→ hml) and 'main' (→ prd).
+# No image rebuild: reads the tag from the upstream values file and copies it downstream.
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: {{ app_name }}-promote
+  namespace: {{ ci_namespace }}
+spec:
+  description: >
+    Promotion pipeline. Reads image.tag from SOURCE_VALUES_FILE and writes
+    the same tag to TARGET_VALUES_FILE, then commits and pushes. The same
+    artifact that was validated in the previous environment is promoted —
+    nothing is rebuilt.
+  params:
+    - name: gitops-repo-url
+      type: string
+      default: "{{ gitops_repo_url }}"
+    - name: gitops-repo-revision
+      type: string
+      default: "{{ gitops_repo_revision }}"
+    - name: source-values-file
+      type: string
+      description: "Values file to read the validated tag from."
+    - name: target-values-file
+      type: string
+      description: "Values file to write the promoted tag into."
+  workspaces:
+    - name: shared-workspace
+    - name: gitops-auth
+  tasks:
+    - name: promote
+      taskRef:
+        name: promote-gitops
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+        - name: basic-auth
+          workspace: gitops-auth
+      params:
+        - name: GITOPS_REPO_URL
+          value: $(params.gitops-repo-url)
+        - name: GITOPS_REPO_REVISION
+          value: $(params.gitops-repo-revision)
+        - name: SOURCE_VALUES_FILE
+          value: $(params.source-values-file)
+        - name: TARGET_VALUES_FILE
+          value: $(params.target-values-file)
+        - name: GIT_USER_NAME
+          value: "{{ git_user_name }}"
+        - name: GIT_USER_EMAIL
+          value: "{{ git_user_email }}"

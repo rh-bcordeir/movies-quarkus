@@ -1,0 +1,107 @@
+---
+# ── Dev Application ───────────────────────────────────────────────────────────
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ app_name }}-dev
+  namespace: {{ gitops_namespace }}
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: {{ gitops_repo_url }}
+    targetRevision: {{ gitops_repo_revision }}
+    path: {{ gitops_chart_path }}
+    helm:
+      releaseName: {{ app_name }}
+      valueFiles:
+        - values/values-dev.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: {{ namespace_dev }}
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=false
+      - ServerSideApply=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 10s
+        factor: 2
+        maxDuration: 3m
+
+---
+# ── Homolog Application ───────────────────────────────────────────────────────
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ app_name }}-hml
+  namespace: {{ gitops_namespace }}
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: {{ gitops_repo_url }}
+    targetRevision: {{ gitops_repo_revision }}
+    path: {{ gitops_chart_path }}
+    helm:
+      releaseName: {{ app_name }}
+      valueFiles:
+        - values/values-hml.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: {{ namespace_hml }}
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=false
+      - ServerSideApply=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 10s
+        factor: 2
+        maxDuration: 3m
+
+---
+# ── Production Application ────────────────────────────────────────────────────
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ app_name }}-prd
+  namespace: {{ gitops_namespace }}
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: {{ gitops_repo_url }}
+    targetRevision: {{ gitops_repo_revision }}
+    path: {{ gitops_chart_path }}
+    helm:
+      releaseName: {{ app_name }}
+      valueFiles:
+        - values/values-prd.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: {{ namespace_prd }}
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=false
+      - ServerSideApply=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 10s
+        factor: 2
+        maxDuration: 3m

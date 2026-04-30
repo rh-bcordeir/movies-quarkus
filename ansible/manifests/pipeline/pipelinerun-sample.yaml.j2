@@ -1,0 +1,28 @@
+---
+# Reference PipelineRun for manually triggering the CI pipeline:
+#   oc create -f _rendered/pipeline/pipelinerun-sample.yaml
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  generateName: {{ app_name }}-ci-run-
+  namespace: {{ ci_namespace }}
+spec:
+  pipelineRef:
+    name: {{ app_name }}-ci
+  taskRunTemplate:
+    serviceAccountName: pipeline-sa
+  params:
+    - name: app-repo-revision
+      value: develop
+    - name: image-tag
+      value: manual-test
+  workspaces:
+    - name: shared-workspace
+      persistentVolumeClaim:
+        claimName: pipeline-workspace
+    - name: maven-cache
+      persistentVolumeClaim:
+        claimName: maven-cache
+    - name: gitops-auth
+      secret:
+        secretName: {{ git_credentials_secret }}
