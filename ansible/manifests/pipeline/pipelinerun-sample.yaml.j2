@@ -10,7 +10,7 @@ spec:
   pipelineRef:
     name: {{ app_name }}-ci
   taskRunTemplate:
-    serviceAccountName: pipeline-sa
+    serviceAccountName: pipeline
   params:
     - name: app-repo-revision
       value: develop

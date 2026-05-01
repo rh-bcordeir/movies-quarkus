@@ -201,7 +201,7 @@ oc create secret docker-registry quay-push-secret \
   --docker-password=<token> \
   -n movies-quarkus-ci
 
-oc secrets link pipeline-sa quay-push-secret --for=mount -n movies-quarkus-ci
+oc secrets link pipeline quay-push-secret --for=mount -n movies-quarkus-ci
 ```
 
 ### 2. Create the GitOps push credentials secret
@@ -212,7 +212,7 @@ Generate a GitHub PAT with `repo` scope:
 ```sh
 USER=<your-github-username>
 TOKEN=<your-github-pat>
-oc create secret generic gitops-git-credentials \
+oc create secret generic git-credentials \
   --from-literal=.git-credentials="https://${USER}:${TOKEN}@github.com" \
   --from-literal=.gitconfig=$'[credential]\n  helper = store' \
   -n movies-quarkus-ci
@@ -248,8 +248,8 @@ tkn pipelinerun logs -L -f -n movies-quarkus-ci
 | Resource | Namespace |
 |----------|-----------|
 | Namespaces: `movies-quarkus-ci/dev/hml/prd` | — |
-| `ServiceAccount pipeline-sa` | `movies-quarkus-ci` |
-| `RoleBinding pipeline-sa-edit` | `movies-quarkus-ci` |
+| `ServiceAccount pipeline` | `movies-quarkus-ci` |
+| `RoleBinding pipeline-edit` | `movies-quarkus-ci` |
 | `PVC pipeline-workspace, maven-cache` | `movies-quarkus-ci` |
 | `Task git-clone, maven-test, buildah` | `movies-quarkus-ci` |
 | `Task update-gitops, promote-gitops` | `movies-quarkus-ci` |

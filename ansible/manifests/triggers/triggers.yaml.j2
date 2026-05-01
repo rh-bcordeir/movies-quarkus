@@ -48,7 +48,7 @@ spec:
         pipelineRef:
           name: {{ app_name }}-ci
         taskRunTemplate:
-          serviceAccountName: pipeline-sa
+          serviceAccountName: pipeline
         params:
           - name: app-repo-url
             value: $(tt.params.git-repo-url)
@@ -87,7 +87,7 @@ spec:
         pipelineRef:
           name: {{ app_name }}-promote
         taskRunTemplate:
-          serviceAccountName: pipeline-sa
+          serviceAccountName: pipeline
         params:
           - name: source-values-file
             value: "{{ values_file_dev }}"
@@ -121,7 +121,7 @@ spec:
         pipelineRef:
           name: {{ app_name }}-promote
         taskRunTemplate:
-          serviceAccountName: pipeline-sa
+          serviceAccountName: pipeline
         params:
           - name: source-values-file
             value: "{{ values_file_hml }}"
@@ -142,7 +142,7 @@ metadata:
   name: {{ app_name }}-listener
   namespace: {{ ci_namespace }}
 spec:
-  serviceAccountName: pipeline-sa
+  serviceAccountName: pipeline
   triggers:
     - name: develop-push
       interceptors:
