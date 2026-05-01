@@ -26,7 +26,6 @@ spec:
   workspaces:
     - name: shared-workspace
     - name: maven-cache
-    - name: gitops-auth
   tasks:
     - name: fetch-source
       taskRef:
@@ -83,7 +82,6 @@ spec:
         - name: source
           workspace: shared-workspace
         - name: basic-auth
-          workspace: gitops-auth
       params:
         - name: GITOPS_REPO_URL
           value: $(params.gitops-repo-url)

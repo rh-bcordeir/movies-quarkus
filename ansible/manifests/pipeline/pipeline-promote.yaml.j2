@@ -27,7 +27,6 @@ spec:
       description: "Values file to write the promoted tag into."
   workspaces:
     - name: shared-workspace
-    - name: gitops-auth
   tasks:
     - name: promote
       taskRef:
@@ -35,8 +34,6 @@ spec:
       workspaces:
         - name: source
           workspace: shared-workspace
-        - name: basic-auth
-          workspace: gitops-auth
       params:
         - name: GITOPS_REPO_URL
           value: $(params.gitops-repo-url)

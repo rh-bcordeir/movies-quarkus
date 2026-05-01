@@ -63,9 +63,6 @@ spec:
           - name: maven-cache
             persistentVolumeClaim:
               claimName: maven-cache
-          - name: gitops-auth
-            secret:
-              secretName: {{ git_credentials_secret }}
 
 ---
 # ── TriggerTemplate: Promote dev → hml (release branch) ─────────────────────
@@ -100,9 +97,6 @@ spec:
           - name: shared-workspace
             persistentVolumeClaim:
               claimName: pipeline-workspace
-          - name: gitops-auth
-            secret:
-              secretName: {{ git_credentials_secret }}
 
 ---
 # ── TriggerTemplate: Promote hml → prd (main branch) ────────────────────────
@@ -137,9 +131,6 @@ spec:
           - name: shared-workspace
             persistentVolumeClaim:
               claimName: pipeline-workspace
-          - name: gitops-auth
-            secret:
-              secretName: {{ git_credentials_secret }}
 
 ---
 # ── EventListener ─────────────────────────────────────────────────────────────
