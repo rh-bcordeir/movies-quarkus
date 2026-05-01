@@ -33,7 +33,7 @@ git_user_email: "tekton@movies-quarkus.local"
 
 # Name of the Secret holding git credentials for pushing to the gitops repo.
 # Expected keys: .git-credentials and .gitconfig. Created out-of-band.
-git_credentials_secret: "gitops-git-credentials"
+git_credentials_secret: "git-credentials"
 
 # Optional webhook secret for GitHub trigger
-webhook_secret_token: "change-me-please"
+webhook_secret_token: "secret12345"

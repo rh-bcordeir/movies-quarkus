@@ -30,8 +30,6 @@ spec:
       default: "tekton@example.com"
   workspaces:
     - name: source
-    - name: basic-auth
-      description: "Workspace containing .git-credentials and .gitconfig."
   steps:
     - name: update-and-push
       image: registry.access.redhat.com/ubi9/ubi:latest
@@ -41,10 +39,6 @@ spec:
         set -euo pipefail
 
         dnf install -y --quiet git python3-pyyaml >/dev/null
-
-        cp "$(workspaces.basic-auth.path)/.git-credentials" "${HOME}/.git-credentials"
-        cp "$(workspaces.basic-auth.path)/.gitconfig"      "${HOME}/.gitconfig"
-        chmod 400 "${HOME}/.git-credentials" "${HOME}/.gitconfig"
 
         git config --global user.name  "$(params.GIT_USER_NAME)"
         git config --global user.email "$(params.GIT_USER_EMAIL)"
