@@ -18,3 +18,29 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
   name: edit
+---
+# Grants the EventListener pod permission to list/watch ClusterInterceptors,
+# which are cluster-scoped and not covered by the namespace-level edit RoleBinding.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ ci_namespace }}-pipeline-sa-triggers
+rules:
+  - apiGroups: ["triggers.tekton.dev"]
+    resources:
+      - clusterinterceptors
+      - clustertriggerbindings
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ ci_namespace }}-pipeline-sa-triggers
+subjects:
+  - kind: ServiceAccount
+    name: pipeline-sa
+    namespace: {{ ci_namespace }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ ci_namespace }}-pipeline-sa-triggers
