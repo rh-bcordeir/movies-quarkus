@@ -31,7 +31,8 @@ spec:
   workspaces:
     - name: source
     - name: basic-auth
-      description: "Workspace containing .git-credentials and .gitconfig."
+      optional: true
+      description: "Optional workspace with .git-credentials/.gitconfig. If omitted, credentials must be injected via a SA-linked secret."
   results:
     - name: PROMOTED_TAG
       description: "The image tag that was promoted."
@@ -45,9 +46,11 @@ spec:
 
         dnf install -y --quiet git python3-pyyaml >/dev/null
 
-        cp "$(workspaces.basic-auth.path)/.git-credentials" "${HOME}/.git-credentials"
-        cp "$(workspaces.basic-auth.path)/.gitconfig"      "${HOME}/.gitconfig"
-        chmod 400 "${HOME}/.git-credentials" "${HOME}/.gitconfig"
+        if [ "$(workspaces.basic-auth.bound)" = "true" ]; then
+          cp "$(workspaces.basic-auth.path)/.git-credentials" "${HOME}/.git-credentials"
+          cp "$(workspaces.basic-auth.path)/.gitconfig"      "${HOME}/.gitconfig"
+          chmod 400 "${HOME}/.git-credentials" "${HOME}/.gitconfig"
+        fi
 
         git config --global user.name  "$(params.GIT_USER_NAME)"
         git config --global user.email "$(params.GIT_USER_EMAIL)"

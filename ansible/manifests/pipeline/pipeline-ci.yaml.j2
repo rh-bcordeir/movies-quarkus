@@ -26,18 +26,24 @@ spec:
   workspaces:
     - name: shared-workspace
     - name: maven-cache
-    - name: gitops-auth
   tasks:
     - name: fetch-source
       taskRef:
-        name: git-clone
+        resolver: cluster
+        params:
+          - name: kind
+            value: task
+          - name: name
+            value: git-clone
+          - name: namespace
+            value: openshift-pipelines
       workspaces:
         - name: output
           workspace: shared-workspace
       params:
-        - name: url
+        - name: URL
           value: $(params.app-repo-url)
-        - name: revision
+        - name: REVISION
           value: $(params.app-repo-revision)
 
     - name: test
@@ -53,7 +59,14 @@ spec:
     - name: build-image
       runAfter: ["test"]
       taskRef:
-        name: buildah
+        resolver: cluster
+        params:
+          - name: kind
+            value: task
+          - name: name
+            value: buildah
+          - name: namespace
+            value: openshift-pipelines
       workspaces:
         - name: source
           workspace: shared-workspace
@@ -68,8 +81,6 @@ spec:
       workspaces:
         - name: source
           workspace: shared-workspace
-        - name: basic-auth
-          workspace: gitops-auth
       params:
         - name: GITOPS_REPO_URL
           value: $(params.gitops-repo-url)

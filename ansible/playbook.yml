@@ -141,7 +141,7 @@
           - "    --docker-server=quay.io \\"
           - "    --docker-username=<robot> --docker-password=<token> \\"
           - "    -n {{ ci_namespace }}"
-          - "  oc secrets link pipeline-sa quay-push-secret --for=mount -n {{ ci_namespace }}"
+          - "  oc secrets link pipeline quay-push-secret --for=mount -n {{ ci_namespace }}"
           - ""
           - "Create the GitOps push credentials secret:"
           - "  oc create secret generic {{ git_credentials_secret }} \\"

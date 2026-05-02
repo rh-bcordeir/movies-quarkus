@@ -10,7 +10,7 @@ spec:
   pipelineRef:
     name: {{ app_name }}-ci
   taskRunTemplate:
-    serviceAccountName: pipeline-sa
+    serviceAccountName: pipeline
   params:
     - name: app-repo-revision
       value: develop
@@ -23,6 +23,3 @@ spec:
     - name: maven-cache
       persistentVolumeClaim:
         claimName: maven-cache
-    - name: gitops-auth
-      secret:
-        secretName: {{ git_credentials_secret }}
