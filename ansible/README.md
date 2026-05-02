@@ -204,19 +204,37 @@ oc create secret docker-registry quay-push-secret \
 oc secrets link pipeline quay-push-secret --for=mount -n movies-quarkus-ci
 ```
 
-### 2. Create the GitOps push credentials secret
+### 2. Create the Git push/pull credentials secret
 
-The `update-gitops` and `promote-gitops` tasks push commits to the GitOps repo.
-Generate a GitHub PAT with `repo` scope:
+#### Git Credentials for Tekton Pipelines
 
-```sh
-USER=<your-github-username>
-TOKEN=<your-github-pat>
+To allow Tekton pipeline tasks to pull from or push to Git repositories (e.g., GitHub), you must create a Kubernetes secret of type `kubernetes.io/basic-auth` with your Git username and password (or personal access token).
+
+The secret must also include the annotation `tekton.dev/git-0` pointing to your Git host, and it must be linked to the pipeline's service account.
+
+#### Creating the secret
+
+```shell script
 oc create secret generic git-credentials \
-  --from-literal=.git-credentials="https://${USER}:${TOKEN}@github.com" \
-  --from-literal=.gitconfig=$'[credential]\n  helper = store' \
-  -n movies-quarkus-ci
+  --type=kubernetes.io/basic-auth \
+  --from-literal=username=<your-github-username> \
+  --from-literal=password=<your-github-token>
 ```
+
+#### Adding the required annotation
+
+```shell script
+oc annotate secret git-credentials tekton.dev/git-0=https://github.com
+```
+
+#### Linking the secret to the pipeline service account
+
+```shell script
+oc secrets link pipeline git-credentials
+```
+
+> **_NOTE:_** The `pipeline` service account is created automatically by the OpenShift Pipelines operator. Do not create a custom service account unless strictly necessary.
+
 
 ### 3. Configure the GitHub webhook
 
