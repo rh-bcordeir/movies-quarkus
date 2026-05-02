@@ -53,6 +53,35 @@ You can then execute your native executable with: `./target/movies-quarkus-1.0.0
 
 If you want to learn more about building native executables, please consult <https://quarkus.io/guides/maven-tooling>.
 
+## Git Credentials for Tekton Pipelines
+
+To allow Tekton pipeline tasks to pull from or push to Git repositories (e.g., GitHub), you must create a Kubernetes secret of type `kubernetes.io/basic-auth` with your Git username and password (or personal access token).
+
+The secret must also include the annotation `tekton.dev/git-0` pointing to your Git host, and it must be linked to the pipeline's service account.
+
+### Creating the secret
+
+```shell script
+oc create secret generic git-credentials \
+  --type=kubernetes.io/basic-auth \
+  --from-literal=username=<your-github-username> \
+  --from-literal=password=<your-github-token>
+```
+
+### Adding the required annotation
+
+```shell script
+oc annotate secret git-credentials tekton.dev/git-0=https://github.com
+```
+
+### Linking the secret to the pipeline service account
+
+```shell script
+oc secrets link pipeline git-credentials
+```
+
+> **_NOTE:_** The `pipeline` service account is created automatically by the OpenShift Pipelines operator. Do not create a custom service account unless strictly necessary.
+
 ## Provided Code
 
 ### REST
