@@ -269,7 +269,7 @@ tkn pipelinerun logs -L -f -n movies-quarkus-ci
 | Namespaces: `movies-quarkus-ci/dev/hml/prd` | — |
 | `ServiceAccount pipeline` | `movies-quarkus-ci` |
 | `RoleBinding pipeline-edit` | `movies-quarkus-ci` |
-| `PVC pipeline-workspace, maven-cache` | `movies-quarkus-ci` |
+| `PVC pipeline-workspace` | `movies-quarkus-ci` |
 | `Task git-clone, maven-test, buildah` | `movies-quarkus-ci` |
 | `Task update-gitops, promote-gitops` | `movies-quarkus-ci` |
 | `Pipeline movies-quarkus-ci` | `movies-quarkus-ci` |

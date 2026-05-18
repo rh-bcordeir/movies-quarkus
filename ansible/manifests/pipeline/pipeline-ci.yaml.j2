@@ -25,7 +25,6 @@ spec:
       description: "Short SHA injected by the trigger."
   workspaces:
     - name: shared-workspace
-    - name: maven-cache
   tasks:
     - name: fetch-source
       taskRef:
@@ -53,8 +52,6 @@ spec:
       workspaces:
         - name: source
           workspace: shared-workspace
-        - name: maven-cache
-          workspace: maven-cache
 
     - name: build-image
       runAfter: ["test"]
