@@ -60,9 +60,6 @@ spec:
           - name: shared-workspace
             persistentVolumeClaim:
               claimName: pipeline-workspace
-          - name: maven-cache
-            persistentVolumeClaim:
-              claimName: maven-cache
 
 ---
 # ── TriggerTemplate: Promote dev → hml (release branch) ─────────────────────
