@@ -1,11 +1,11 @@
-FROM registry.access.redhat.com/ubi9/openjdk-21:1.24 AS build
+FROM registry.access.redhat.com/ubi9/openjdk-21:latest AS build
 
 USER root
 COPY . /build
 WORKDIR /build
 RUN mvn package -DskipTests
 
-FROM registry.access.redhat.com/ubi9/openjdk-21-runtime:1.24
+FROM registry.access.redhat.com/ubi9/openjdk-21-runtime:latest
 
 ENV LANGUAGE='en_US:en'
 
