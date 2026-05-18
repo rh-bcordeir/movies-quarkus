@@ -218,13 +218,14 @@ The secret must also include the annotation `tekton.dev/git-0` pointing to your 
 oc create secret generic git-credentials \
   --type=kubernetes.io/basic-auth \
   --from-literal=username=<your-github-username> \
-  --from-literal=password=<your-github-token>
+  --from-literal=password=<your-github-token> \
+  -n movies-quarkus-ci
 ```
 
 #### Adding the required annotation
 
 ```shell script
-oc annotate secret git-credentials tekton.dev/git-0=https://github.com
+oc annotate secret git-credentials tekton.dev/git-0=https://github.com -n movies-quarkus-ci
 ```
 
 #### Linking the secret to the pipeline service account
