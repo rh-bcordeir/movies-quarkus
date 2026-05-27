@@ -14,7 +14,7 @@ import jakarta.transaction.Transactional;
 public class DatabaseSeeder {
 
     @Inject
-    MovieRepository repo; //inject 
+    MovieRepository repo; //
 
     @Transactional
     void onStart(@Observes StartupEvent ev) {
