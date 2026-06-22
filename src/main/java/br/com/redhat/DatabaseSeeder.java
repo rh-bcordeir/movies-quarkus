@@ -1,7 +1,9 @@
 package br.com.redhat;
 
 
+import br.com.redhat.entity.Director;
 import br.com.redhat.entity.Movie;
+import br.com.redhat.repository.DirectorRepository;
 import br.com.redhat.repository.MovieRepository;
 
 import io.quarkus.runtime.StartupEvent;
@@ -14,15 +16,27 @@ import jakarta.transaction.Transactional;
 public class DatabaseSeeder {
 
     @Inject
-    MovieRepository repo;
+    MovieRepository repo; //
+
+    @Inject
+    DirectorRepository directorRepo;
 
     @Transactional
     void onStart(@Observes StartupEvent ev) {
-        if (repo.count() > 0) return;
-        repo.persist(new Movie("The Shawshank Redemption", "1994", "Frank Darabont", "Drama"));
-        repo.persist(new Movie("Parasite", "2019", "Bong Joon-ho", "Drama"));
-        repo.persist(new Movie("O Auto da Compadecida", "2000", "Guel Arraes", "Comedia"));
-        repo.persist(new Movie("Superbad", "2007", "Greg Mottola", "Comedy"));
-        repo.persist(new Movie("Mad Max: Fury Road", "2015", "George Miller", "Action"));
+        if (repo.count() == 0) {
+            repo.persist(new Movie("The Shawshank Redemption", "1994", "Frank Darabont", "Drama"));
+            repo.persist(new Movie("Parasite", "2019", "Bong Joon-ho", "Drama"));
+            repo.persist(new Movie("O Auto da Compadecida", "2000", "Guel Arraes", "Comedia"));
+            repo.persist(new Movie("Superbad", "2007", "Greg Mottola", "Comedy"));
+            repo.persist(new Movie("Mad Max: Fury Road", "2015", "George Miller", "Action"));
+        }
+
+        if (directorRepo.count() == 0) {
+            directorRepo.persist(new Director("Frank Darabont", "American", "1959"));
+            directorRepo.persist(new Director("Bong Joon-ho", "South Korean", "1969"));
+            directorRepo.persist(new Director("Guel Arraes", "Brazilian", "1953"));
+            directorRepo.persist(new Director("Greg Mottola", "American", "1964"));
+            directorRepo.persist(new Director("George Miller", "Australian", "1945"));
+        }
     }
 }
