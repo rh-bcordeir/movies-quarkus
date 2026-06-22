@@ -1,4 +1,4 @@
-package br.com.redhat;
+package br.com.redhat.resources;
 
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
