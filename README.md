@@ -53,6 +53,36 @@ You can then execute your native executable with: `./target/movies-quarkus-1.0.0
 
 If you want to learn more about building native executables, please consult <https://quarkus.io/guides/maven-tooling>.
 
+## Testing file storage
+
+`StorageResource` exposes `/api/v1/storage/files` to read and write plain-text files in the directory set by `storage.path`
+(`/data` in the cluster, where the PVC is mounted; `target/storage` in dev mode).
+
+```shell script
+# Local (dev mode)
+BASE=http://localhost:8080/api/v1/storage/files
+# OpenShift
+BASE=https://$(oc get route movies-quarkus -o jsonpath='{.spec.host}')/api/v1/storage/files
+
+# Create a file (201 Created; 204 No Content if it already existed)
+curl -i -X PUT -H 'Content-Type: text/plain' --data 'hello pvc' $BASE/test.txt
+
+# List files
+curl $BASE
+
+# Read a file (404 if it does not exist)
+curl $BASE/test.txt
+
+# Delete a file (204 No Content)
+curl -i -X DELETE $BASE/test.txt
+```
+
+To confirm the file is on the PVC, check it inside the pod:
+
+```shell script
+oc exec deploy/movies-quarkus -- cat /data/test.txt
+```
+
 ## Provided Code
 
 ### REST
