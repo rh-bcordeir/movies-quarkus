@@ -1,7 +1,3 @@
-# movies-quarkus with a PVC mounted at /data (used by /api/v1/storage/files).
-# Based on the Helm chart in https://github.com/rh-bcordeir/movies-quarkus-devops
-# Apply with: oc apply -n <namespace> -f k8s/deployment-pvc.yaml
----
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
